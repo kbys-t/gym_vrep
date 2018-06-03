@@ -63,40 +63,38 @@ class VrepEnv:
                 scenePath += d + "/" + scene + ".ttt"
                 break
         # start V-REP
-        lock = fasteners.InterProcessLock(os.path.abspath(os.path.dirname(__file__)) + "lockfile")
-        lock.acquire()
-        self.IS_BOOT = is_boot
-        if self.IS_BOOT:
-            # change port number
-            content = ""
-            with open(self.VREP_DIR + exeDir + "remoteApiConnections.txt", "r") as f_handle:
-                content = f_handle.read().splitlines()
-            target = content[11].split("=")
-            target[1] = " " + str(port)
-            content[11] = "=".join(target)
-            with open(self.VREP_DIR + exeDir + "remoteApiConnections.txt", "w") as f_handle:
-                f_handle.write("\n".join(content))
-            # open vrep
-            vrepArgs = [self.VREP_DIR + exeDir + vrepExe, scenePath]
-            if not is_render:
-                vrepArgs.extend(["-h"])
-            vrepArgs.extend(["&"])
-            self.vrepProcess = subprocess.Popen(vrepArgs, stdout=open(os.devnull, 'w'), stderr=subprocess.STDOUT, preexec_fn=os.setsid)
-            print("Enviornment was opened:\n{}\n{}".format(vrepArgs[0], scenePath))
-        else:
-            # get port number (assume that the opened vrep loaded the current text)
-            content = ""
-            with open(self.VREP_DIR + exeDir + "remoteApiConnections.txt", "r") as f_handle:
-                content = f_handle.read().splitlines()
-            target = content[11].split("=")
-            port = int(target[1])
-        # connect to V-REP
-        ipAddress = "127.0.0.1"
-        self.__ID = vrep.simxStart(ipAddress, port, True, True, 5000, 1)
-        while self.__ID == -1:
+        with fasteners.InterProcessLock(os.path.abspath(os.path.dirname(__file__)) + ".lockfile"):
+            self.IS_BOOT = is_boot
+            if self.IS_BOOT:
+                # change port number
+                content = ""
+                with open(self.VREP_DIR + exeDir + "remoteApiConnections.txt", "r") as f_handle:
+                    content = f_handle.read().splitlines()
+                target = content[11].split("=")
+                target[1] = " " + str(port)
+                content[11] = "=".join(target)
+                with open(self.VREP_DIR + exeDir + "remoteApiConnections.txt", "w") as f_handle:
+                    f_handle.write("\n".join(content))
+                # open vrep
+                vrepArgs = [self.VREP_DIR + exeDir + vrepExe, scenePath]
+                if not is_render:
+                    vrepArgs.extend(["-h"])
+                vrepArgs.extend(["&"])
+                self.vrepProcess = subprocess.Popen(vrepArgs, stdout=open(os.devnull, 'w'), stderr=subprocess.STDOUT, preexec_fn=os.setsid)
+                print("Enviornment was opened:\n{}\n{}".format(vrepArgs[0], scenePath))
+            else:
+                # get port number (assume that the opened vrep loaded the current text)
+                content = ""
+                with open(self.VREP_DIR + exeDir + "remoteApiConnections.txt", "r") as f_handle:
+                    content = f_handle.read().splitlines()
+                target = content[11].split("=")
+                port = int(target[1])
+            # connect to V-REP
+            ipAddress = "127.0.0.1"
             self.__ID = vrep.simxStart(ipAddress, port, True, True, 5000, 1)
-        print("Connection succeeded: {}:{}".format(ipAddress, port))
-        lock.release()
+            while self.__ID == -1:
+                self.__ID = vrep.simxStart(ipAddress, port, True, True, 5000, 1)
+            print("Connection succeeded: {}:{}".format(ipAddress, port))
         # open scene if already booted
         if not self.IS_BOOT:
             vrep.simxLoadScene(self.__ID, scenePath, 0, vrep.simx_opmode_blocking)
@@ -136,7 +134,7 @@ class VrepEnv:
             vrep.simxCloseScene(self.__ID, vrep.simx_opmode_blocking)
             vrep.simxFinish(self.__ID)
             print("Scene was closed")
-        time.sleep(2)   # just in case
+        time.sleep(5)   # just in case (must in linux?)
 
 
 
