@@ -12,6 +12,7 @@ import gym
 from gym import spaces
 
 from abc import ABCMeta, abstractmethod
+from future.utils import with_metaclass
 
 ######################################################
 class VrepEnv:
@@ -193,7 +194,7 @@ class VrepEnv:
 ######################################################
 # meta model
 ######################################################
-class Mode(metaclass=ABCMeta):
+class Mode(with_metaclass(ABCMeta)):
     @abstractmethod
     def __init__(self, id):
         self.id_ = id
@@ -219,7 +220,11 @@ class Mode(metaclass=ABCMeta):
         elif "action" in soa:
             max_v = np.array(vrep.simxUnpackFloats(vrep.simxGetStringSignal(self.id_, prefix + "max_action", vrep.simx_opmode_blocking)[1]))
             min_v = np.array(vrep.simxUnpackFloats(vrep.simxGetStringSignal(self.id_, prefix + "min_action", vrep.simx_opmode_blocking)[1]))
-        return spaces.Box(min_v, max_v, dtype=dtype)
+        try:
+            rtv = spaces.Box(min_v, max_v, dtype=dtype)
+        except:
+            rtv = spaces.Box(min_v, max_v)
+        return rtv
 
     def _get_StateReward(self, prefix="", init=False):
         v_opmode = vrep.simx_opmode_streaming if init else vrep.simx_opmode_buffer
