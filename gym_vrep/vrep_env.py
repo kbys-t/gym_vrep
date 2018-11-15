@@ -13,6 +13,7 @@ from gym import spaces
 
 from abc import ABCMeta, abstractmethod
 from future.utils import with_metaclass
+from builtins import super
 
 ######################################################
 class VrepEnv:
@@ -244,7 +245,7 @@ class Mode(with_metaclass(ABCMeta)):
 ######################################################
 class ModeN(Mode):
     def __init__(self, id):
-        super().__init__(id)
+        super(ModeN, self).__init__(id)
         self.s_obs_ = self._get_Space("state")
         self.s_act_ = self._get_Space("action")
         # variables will be received
@@ -258,7 +259,7 @@ class ModeN(Mode):
         self.done = self._check_Done(init=True)
 
     def define(self):
-        rtv = super().define()
+        rtv = super(ModeN, self).define()
         return rtv
 
     def set(self, action):
@@ -270,14 +271,14 @@ class ModeN(Mode):
 
     def get(self):
         self.state , self.reward = self._get_StateReward()
-        return super().get()
+        return super(ModeN, self).get()
 
 ######################################################
 # for multi_objective scenes
 ######################################################
 class ModeMO(Mode):
     def __init__(self, id):
-        super().__init__(id)
+        super(ModeMO, self).__init__(id)
         # constant shared with lua
         self.n_task = vrep.simxGetIntegerSignal(self.id_, "tasks", vrep.simx_opmode_blocking)[1]
         self.s_obs_ = self._get_Space("state")
@@ -293,7 +294,7 @@ class ModeMO(Mode):
         self.done = self._check_Done(init=True)
 
     def define(self):
-        rtv = super().define()
+        rtv = super(ModeMO, self).define()
         return rtv + [self.n_task]
 
     def set(self, action):
@@ -306,14 +307,14 @@ class ModeMO(Mode):
 
     def get(self):
         self.state , self.reward = self._get_StateReward()
-        return super().get()
+        return super(ModeMO, self).get()
 
 ######################################################
 # for multi_agent scenes
 ######################################################
 class ModeMA(Mode):
     def __init__(self, id):
-        super().__init__(id)
+        super(ModeMA, self).__init__(id)
         # constant shared with lua
         self.n_agent = vrep.simxGetIntegerSignal(self.id_, "agents", vrep.simx_opmode_blocking)[1]
         self.s_act_ = []
@@ -333,7 +334,7 @@ class ModeMA(Mode):
         self.done = self._check_Done(init=True)
 
     def define(self):
-        rtv = super().define()
+        rtv = super(ModeMA, self).define()
         return rtv + [self.n_agent]
 
     def set(self, action):
@@ -349,4 +350,4 @@ class ModeMA(Mode):
     def get(self):
         for i in range(self.n_agent):
             self.state[i] , self.reward[i] = self._get_StateReward(prefix="Agent" + str(i+1) + "_")
-        return super().get()
+        return super(ModeMA, self).get()
