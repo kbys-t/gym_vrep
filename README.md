@@ -12,7 +12,7 @@ OpenAI gym-like reinforcement environment created by V-REP
 * numpy
 * gym
 * fasteners
-* git-lfs (for developer)
+* git-lfs
 
 # Installation
 
